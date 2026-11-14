@@ -194,9 +194,9 @@ input[type="range"] {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at center, transparent 30%, var(--bg) 82%),
+    radial-gradient(circle at center, transparent 35%, var(--bg) 88%),
     url('/static/gozeria.png') center 58% / min(540px, 72vw) no-repeat;
-  opacity: 0.16;
+  opacity: 0.34;
   pointer-events: none;
   z-index: 0;
 }
@@ -238,9 +238,9 @@ input[type="range"] {
 
 .pad {
   position: relative;
-  background: rgba(19, 24, 35, 0.9);
-  backdrop-filter: blur(4px);
-  border: 2px solid var(--border);
+  background: rgba(11, 15, 23, 0.42);
+  backdrop-filter: blur(2px);
+  border: 2px solid rgba(37, 48, 71, 0.85);
   border-radius: 14px;
   padding: 16px 14px 20px;
   min-height: 112px;
@@ -250,11 +250,13 @@ input[type="range"] {
   cursor: pointer;
   user-select: none;
   overflow: hidden;
-  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .pad:hover {
   transform: translateY(-2px);
+  background: rgba(19, 24, 35, 0.62);
   border-color: var(--pad-color, var(--accent));
 }
 
