@@ -75,6 +75,9 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
     app.state.engine = engine
     app.state.hotkeys = hotkeys
     app.state.mic_switcher = mic_switcher
+    app.state.uvicorn_server = None
+    app.state.ws_clients = 0
+    app.state.shutdown_task = None
 
     @app.on_event("startup")
     def _startup() -> None:
@@ -267,6 +270,10 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
     @app.websocket("/ws/meters")
     async def ws_meters(websocket: WebSocket):
         await websocket.accept()
+        app.state.ws_clients += 1
+        if app.state.shutdown_task is not None:
+            app.state.shutdown_task.cancel()
+            app.state.shutdown_task = None
         try:
             while True:
                 await websocket.send_json(
@@ -282,5 +289,15 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
             pass
         except Exception:
             pass
+        finally:
+            app.state.ws_clients = max(0, app.state.ws_clients - 1)
+            if start_audio and app.state.ws_clients == 0 and app.state.uvicorn_server is not None:
+                async def _delayed_exit():
+                    await asyncio.sleep(3.0)
+                    if app.state.ws_clients == 0 and app.state.uvicorn_server is not None:
+                        logger.info("UI window closed; shutting down HotMic.")
+                        app.state.uvicorn_server.should_exit = True
+
+                app.state.shutdown_task = asyncio.create_task(_delayed_exit())
 
     return app

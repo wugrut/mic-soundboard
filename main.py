@@ -108,9 +108,12 @@ def main() -> None:
 
     try:
         app = create_app(base_dir=base_dir, start_audio=True)
+        config = uvicorn.Config(app, host="127.0.0.1", port=port, log_config=None)
+        server = uvicorn.Server(config)
+        app.state.uvicorn_server = server
         threading.Thread(target=_open_app_window, args=(url,), daemon=True).start()
         logger.info("Starting HotMic server at %s (data=%s)", url, base_dir)
-        uvicorn.run(app, host="127.0.0.1", port=port, log_config=None)
+        server.run()
     except Exception:
         logger.exception("Fatal error starting HotMic")
         raise

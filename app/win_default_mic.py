@@ -6,9 +6,12 @@ import atexit
 import ctypes
 import json
 import logging
+import warnings
 from ctypes import c_int, c_wchar_p
 from pathlib import Path
 from typing import Optional
+
+warnings.filterwarnings("ignore", message=".*COMError attempting to get property.*", module="pycaw.*")
 
 logger = logging.getLogger("mic_soundboard.win_mic")
 

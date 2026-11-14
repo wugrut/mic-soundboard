@@ -17,6 +17,7 @@ def main() -> None:
         "--noconfirm",
         "--clean",
         "--onefile",
+        "--noconsole",
         "--name",
         "HotMic",
         "--distpath",
