@@ -7,7 +7,7 @@ import logging
 import shutil
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
@@ -47,6 +47,7 @@ class SettingsUpdate(BaseModel):
     queue_mode: Optional[bool] = None
     auto_switch_default_mic: Optional[bool] = None
     stop_all_hotkey: Optional[str] = None
+    sound_locations: Optional[List[str]] = None
 
 
 class PadUpdate(BaseModel):
@@ -106,6 +107,7 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
         return {
             "running": engine.running,
             "last_error": engine.last_error,
+            "data_dir": str(base_dir),
             "recommended_discord_mic": engine.recommended_discord_mic,
             "auto_mic_switched": mic_switcher.active,
             "effective_vout_gain_db": engine.get_effective_vout_gain_db(),
@@ -133,6 +135,7 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
                 "queue_mode": cfg.queue_mode,
                 "auto_switch_default_mic": cfg.auto_switch_default_mic,
                 "stop_all_hotkey": cfg.stop_all_hotkey,
+                "sound_locations": cfg.sound_locations,
             },
             "pads": pads,
             "playing": engine.get_playing_status(),
@@ -245,8 +248,10 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
         if not pad:
             raise HTTPException(status_code=404, detail="Pad not found")
         engine.stop_pad(pad_id)
-        file_path = sounds_dir / pad.filename
-        file_path.unlink(missing_ok=True)
+        file_path = engine._resolve_pad_path(pad)
+        # Only delete files managed inside HotMic's own sounds_dir
+        if file_path.parent.resolve() == sounds_dir.resolve():
+            file_path.unlink(missing_ok=True)
         del store.config.pads[pad_id]
         engine.clips.pop(pad_id, None)
         store.save()

@@ -6,7 +6,7 @@ import json
 import threading
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -20,6 +20,7 @@ class PadConfig:
     loop: bool = False
     start_sec: float = 0.0
     end_sec: Optional[float] = None
+    file_path: str = ""
 
 
 @dataclass
@@ -41,6 +42,7 @@ class AppConfig:
     queue_mode: bool = False
     auto_switch_default_mic: bool = True
     stop_all_hotkey: str = "f12"
+    sound_locations: List[str] = field(default_factory=list)
     pads: Dict[str, PadConfig] = field(default_factory=dict)
 
 

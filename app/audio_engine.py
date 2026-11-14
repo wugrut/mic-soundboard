@@ -478,24 +478,51 @@ class AudioEngine:
         ch = min(2, outdata.shape[1])
         outdata[:, :ch] = scaled[:, :ch]
 
+    def _resolve_pad_path(self, pad: PadConfig) -> Path:
+        if pad.file_path:
+            p = Path(pad.file_path)
+            if p.exists():
+                return p
+        return self.sounds_dir / pad.filename
+
     def sync_sounds_directory(self) -> None:
-        """Scan sounds/ folder and register any new audio files."""
+        """Scan primary sounds/ folder and any configured sound_locations for audio files."""
         with self._lock:
-            existing_files = {p.filename: pid for pid, p in self.store.config.pads.items()}
-            for path in sorted(self.sounds_dir.iterdir()):
-                if not path.is_file() or path.suffix.lower() not in SUPPORTED_EXTENSIONS:
-                    continue
-                if path.name not in existing_files:
+            scan_dirs: List[Path] = [self.sounds_dir]
+            for loc in self.store.config.sound_locations or []:
+                p = Path(loc).expanduser()
+                if p.is_dir() and p not in scan_dirs:
+                    scan_dirs.append(p)
+
+            existing_by_path = {
+                str(self._resolve_pad_path(p).resolve()): pid
+                for pid, p in self.store.config.pads.items()
+                if self._resolve_pad_path(p).exists()
+            }
+            existing_by_name = {p.filename: pid for pid, p in self.store.config.pads.items()}
+
+            for folder in scan_dirs:
+                for path in sorted(folder.iterdir()):
+                    if not path.is_file() or path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+                        continue
+                    resolved = str(path.resolve())
+                    if resolved in existing_by_path:
+                        continue
+                    if folder == self.sounds_dir and path.name in existing_by_name:
+                        continue
                     pid = self._make_pad_id(path.stem)
                     self.store.config.pads[pid] = PadConfig(
                         id=pid,
                         name=path.stem.replace("_", " ").replace("-", " ").title(),
                         filename=path.name,
+                        file_path="" if folder == self.sounds_dir else resolved,
                     )
+                    existing_by_path[resolved] = pid
+
             # Prune missing files
             to_del = [
                 pid for pid, pad in self.store.config.pads.items()
-                if not (self.sounds_dir / pad.filename).exists()
+                if not self._resolve_pad_path(pad).exists()
             ]
             for pid in to_del:
                 del self.store.config.pads[pid]
@@ -518,7 +545,7 @@ class AudioEngine:
             pad = self.store.config.pads.get(pad_id)
             if not pad:
                 raise KeyError(f"Unknown pad_id: {pad_id}")
-            pcm, sr = decode_audio_file(self.sounds_dir / pad.filename, TARGET_SAMPLE_RATE)
+            pcm, sr = decode_audio_file(self._resolve_pad_path(pad), TARGET_SAMPLE_RATE)
             dur = len(pcm) / float(sr) if sr else 0.0
             clip = LoadedClip(pad_id=pad_id, pcm=pcm, duration_sec=dur)
             self.clips[pad_id] = clip

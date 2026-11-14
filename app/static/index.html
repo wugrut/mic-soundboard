@@ -130,7 +130,13 @@
             <span>Auto-Switch Windows Default Mic while running (restores on exit)</span>
           </label>
         </div>
+        <div class="field">
+          <label>Extra Sound Folders (one path per line)</label>
+          <textarea id="txt-sound-locs" rows="3" placeholder="e.g. C:\Users\you\Music\SoundEffects"></textarea>
+          <small class="hint">Primary library: <code id="data-dir-path">Documents\HotMic\sounds</code></small>
+        </div>
         <div class="field row-between">
+          <button id="btn-save-locs" class="btn btn-ghost">Save Folders &amp; Rescan</button>
           <button id="btn-calibrate" class="btn btn-primary">🎛️ Auto-Calibrate Loopback Gain</button>
           <span id="calibrate-status" class="hint"></span>
         </div>

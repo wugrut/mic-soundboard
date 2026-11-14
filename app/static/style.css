@@ -356,13 +356,14 @@ input[type="range"] {
   color: var(--muted);
 }
 
-.field select, .field input[type="text"], .field input[type="number"] {
+.field select, .field input[type="text"], .field input[type="number"], .field textarea {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
+  font-family: inherit;
 }
 
 .hotkey-row, .row-between, .modal-footer {

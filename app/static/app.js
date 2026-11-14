@@ -45,6 +45,10 @@ function renderAll() {
   el("chk-duck-music").checked = !!s.duck_music_on_voice;
   el("chk-queue").checked = !!s.queue_mode;
   el("chk-auto-mic").checked = s.auto_switch_default_mic !== false;
+  el("txt-sound-locs").value = (s.sound_locations || []).join("\n");
+  if (appState.data_dir) {
+    el("data-dir-path").textContent = `${appState.data_dir}\\sounds`;
+  }
 
   const db = appState.effective_vout_gain_db;
   el("slider-vout-db").value = db;
@@ -272,6 +276,15 @@ el("slider-vout-db").oninput = (e) => {
   const v = parseFloat(e.target.value);
   el("vout-db-label").textContent = `${v.toFixed(1)} dB`;
   saveSetting({ virtual_out_gain_db: v });
+};
+
+el("btn-save-locs").onclick = async () => {
+  const locs = el("txt-sound-locs").value
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  await saveSetting({ sound_locations: locs });
+  await refreshState();
 };
 
 el("btn-calibrate").onclick = async () => {

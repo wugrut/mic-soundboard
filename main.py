@@ -19,22 +19,33 @@ from app.server import create_app
 
 
 def _get_app_data_dir() -> Path:
-    """Return persistent user data directory (%LOCALAPPDATA%\\HotMic) so sounds & config
-    survive moving, reloading, or upgrading HotMic.exe."""
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        data_dir = Path(local_app_data) / "HotMic"
-    else:
-        data_dir = Path.home() / ".hotmic"
-    data_dir.mkdir(parents=True, exist_ok=True)
+    """Return persistent user data directory (Documents\\HotMic) so sounds & config
+    are easy to find and survive moving, reloading, or upgrading HotMic.exe."""
+    docs_dir = Path.home() / "Documents"
+    data_dir = (docs_dir / "HotMic") if docs_dir.exists() else (Path.home() / "HotMic")
+    sounds_target = data_dir / "sounds"
+    first_run = not data_dir.exists()
+    sounds_target.mkdir(parents=True, exist_ok=True)
 
-    # One-time migration from legacy portable folder (exe dir or source dir) if empty
-    if not (data_dir / "config.json").exists():
-        legacy_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
-        if (legacy_dir / "config.json").exists():
-            shutil.copy2(legacy_dir / "config.json", data_dir / "config.json")
-        if (legacy_dir / "sounds").is_dir() and not (data_dir / "sounds").exists():
-            shutil.copytree(legacy_dir / "sounds", data_dir / "sounds")
+    # On first run, check default/legacy locations and migrate config & sounds
+    if first_run or not (data_dir / "config.json").exists():
+        candidates: list[Path] = []
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            candidates.append(Path(local_app_data) / "HotMic")
+        candidates.append(Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent)
+        candidates.append(Path(__file__).parent)
+
+        for legacy_dir in candidates:
+            if not legacy_dir.exists() or legacy_dir.resolve() == data_dir.resolve():
+                continue
+            if not (data_dir / "config.json").exists() and (legacy_dir / "config.json").exists():
+                shutil.copy2(legacy_dir / "config.json", data_dir / "config.json")
+            legacy_sounds = legacy_dir / "sounds"
+            if legacy_sounds.is_dir():
+                for f in legacy_sounds.iterdir():
+                    if f.is_file() and not (sounds_target / f.name).exists():
+                        shutil.copy2(f, sounds_target / f.name)
 
     return data_dir
 

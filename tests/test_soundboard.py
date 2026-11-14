@@ -179,3 +179,26 @@ def test_toggle_trim_and_voice_ducking(tmp_path: Path):
     out = np.zeros((480, 2), dtype=np.float32)
     engine._on_virtual_output(out, 480, None, None)
     assert engine._voice_duck_gain < 1.0
+
+
+def test_extra_sound_locations_persistent_scan(tmp_path: Path):
+    base = tmp_path / "app"
+    extra = tmp_path / "external_sounds"
+    extra.mkdir(parents=True)
+    ext_wav = extra / "air_raid.wav"
+    _make_wav(ext_wav, sr=48000, channels=2, duration=0.1)
+
+    app = create_app(base_dir=base, start_audio=False)
+    client = TestClient(app)
+
+    res = client.post("/api/settings", json={"sound_locations": [str(extra)]})
+    assert res.status_code == 200
+
+    state = client.get("/api/state").json()
+    pad_ids = [p["id"] for p in state["pads"]]
+    assert "air_raid" in pad_ids
+
+    # Deleting the pad should not delete external user file outside sounds_dir
+    del_res = client.delete("/api/pads/air_raid")
+    assert del_res.status_code == 200
+    assert ext_wav.exists()
