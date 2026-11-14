@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import shutil
+import threading
 from dataclasses import asdict
 from pathlib import Path
 from typing import List, Optional
@@ -90,10 +92,10 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
 
     @app.on_event("shutdown")
     def _shutdown() -> None:
-        hotkeys.stop()
-        engine.stop()
         if start_audio:
             mic_switcher.restore()
+        hotkeys.stop()
+        engine.stop()
 
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
@@ -296,7 +298,12 @@ def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
                     await asyncio.sleep(3.0)
                     if app.state.ws_clients == 0 and app.state.uvicorn_server is not None:
                         logger.info("UI window closed; shutting down HotMic.")
+                        mic_switcher.restore()
                         app.state.uvicorn_server.should_exit = True
+                        # Force-exit fallback in case PortAudio/pynput blocks Uvicorn shutdown
+                        t = threading.Timer(2.5, lambda: os._exit(0))
+                        t.daemon = True
+                        t.start()
 
                 app.state.shutdown_task = asyncio.create_task(_delayed_exit())
 
