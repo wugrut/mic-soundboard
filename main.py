@@ -1,8 +1,9 @@
-"""Entry point for Mic Soundboard & Steam Virtual Mic Injector."""
+"""Entry point for HotMic — Virtual Mic Soundboard."""
 
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import socket
 import subprocess
@@ -17,10 +18,31 @@ import uvicorn
 from app.server import create_app
 
 
+def _get_app_data_dir() -> Path:
+    """Return persistent user data directory (%LOCALAPPDATA%\\HotMic) so sounds & config
+    survive moving, reloading, or upgrading HotMic.exe."""
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        data_dir = Path(local_app_data) / "HotMic"
+    else:
+        data_dir = Path.home() / ".hotmic"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # One-time migration from legacy portable folder (exe dir or source dir) if empty
+    if not (data_dir / "config.json").exists():
+        legacy_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+        if (legacy_dir / "config.json").exists():
+            shutil.copy2(legacy_dir / "config.json", data_dir / "config.json")
+        if (legacy_dir / "sounds").is_dir() and not (data_dir / "sounds").exists():
+            shutil.copytree(legacy_dir / "sounds", data_dir / "sounds")
+
+    return data_dir
+
+
 def _setup_logging(base_dir: Path) -> None:
     log_path = base_dir / "soundboard.log"
-    # Under pythonw.exe on Windows, sys.stdout and sys.stderr are None,
-    # which causes uvicorn's default formatter or print() to crash.
+    # Under pythonw.exe / frozen windowless mode on Windows, sys.stdout and sys.stderr
+    # can be None, which causes uvicorn's default formatter or print() to crash.
     if sys.stdout is None:
         sys.stdout = open(log_path, "a", encoding="utf-8", buffering=1)
     if sys.stderr is None:
@@ -60,7 +82,7 @@ def _open_app_window(url: str, delay: float = 0.9) -> None:
 
 
 def main() -> None:
-    base_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+    base_dir = _get_app_data_dir()
     _setup_logging(base_dir)
     logger = logging.getLogger("mic_soundboard.main")
 
@@ -69,17 +91,17 @@ def main() -> None:
 
     # If already running, just re-open the UI window and exit cleanly.
     if _is_port_in_use(port):
-        logger.info("Soundboard already running at %s; opening window.", url)
+        logger.info("HotMic already running at %s; opening window.", url)
         _open_app_window(url, delay=0.0)
         return
 
     try:
         app = create_app(base_dir=base_dir, start_audio=True)
         threading.Thread(target=_open_app_window, args=(url,), daemon=True).start()
-        logger.info("Starting Mic Soundboard server at %s", url)
+        logger.info("Starting HotMic server at %s (data=%s)", url, base_dir)
         uvicorn.run(app, host="127.0.0.1", port=port, log_config=None)
     except Exception:
-        logger.exception("Fatal error starting Mic Soundboard")
+        logger.exception("Fatal error starting HotMic")
         raise
 
 
