@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HotMic — Virtual Mic Soundboard</title>
+  <title>HotMic — Gozeria Guild Soundboard</title>
+  <link rel="icon" type="image/png" href="/static/gozeria.png" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="logo">🎙️</span>
+      <img src="/static/gozeria.png" alt="Gozeria Guild" class="brand-logo" />
       <div>
-        <h1>HOTMIC</h1>
+        <div class="brand-title-row">
+          <h1>HOTMIC</h1>
+          <span class="guild-pill">GOZERIA GUILD</span>
+        </div>
         <div class="subline" id="discord-hint">
           Select <strong id="discord-mic-name">Microphone (Steam Streaming Microphone)</strong> in Discord / Game
         </div>
@@ -90,7 +94,7 @@
     </div>
 
     <div id="empty-state" class="empty-state hidden">
-      <div class="empty-icon">🎵</div>
+      <img src="/static/gozeria.png" alt="Gozeria Guild" class="empty-artwork" />
       <h2>Drop audio files here to build your soundboard</h2>
       <p>Supports MP3, WAV, OGG, FLAC, M4A, WebM, and MP4. Trigger by click or global in-game hotkeys.</p>
       <button id="btn-empty-add" class="btn btn-primary">+ Browse Audio Files</button>

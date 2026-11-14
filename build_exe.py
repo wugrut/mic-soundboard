@@ -18,6 +18,8 @@ def main() -> None:
         "--clean",
         "--onefile",
         "--noconsole",
+        "--icon",
+        str(ROOT / "app" / "static" / "gozeria.ico"),
         "--name",
         "HotMic",
         "--distpath",
