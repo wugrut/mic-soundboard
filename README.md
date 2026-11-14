@@ -1,4 +1,4 @@
-# Mic Soundboard — Steam Virtual Mic Injector
+# HotMic — Virtual Mic Soundboard
 
 A streamlined, zero-driver-install Windows 11 soundboard & real-time microphone audio injector for **Discord** and **in-game voice chat** (using your existing **Steam Streaming Microphone** loopback).
 
@@ -13,7 +13,7 @@ A streamlined, zero-driver-install Windows 11 soundboard & real-time microphone 
 - **Global In-Game Hotkeys**: Bind keys (`F1`–`F11`, `Numpad`, combos) to pads, plus `F12` to Stop All.
 
 ## Quick Start
-- **Standalone EXE**: Run `dist/Mic_Soundboard.exe` (build via `python build_exe.py`).
+- **Standalone EXE**: Run `dist/HotMic.exe` (build via `python build_exe.py`).
 - **From Source**: Double-click `START_SOUNDBOARD.bat`.
 
 ## Testing

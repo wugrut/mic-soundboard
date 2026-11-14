@@ -18,7 +18,7 @@ def main() -> None:
         "--clean",
         "--onefile",
         "--name",
-        "Mic_Soundboard",
+        "HotMic",
         "--distpath",
         str(ROOT / "dist"),
         "--workpath",
@@ -45,7 +45,7 @@ def main() -> None:
     ]
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, check=True)
-    exe_path = ROOT / "dist" / "Mic_Soundboard.exe"
+    exe_path = ROOT / "dist" / "HotMic.exe"
     size_mb = exe_path.stat().st_size / (1024 * 1024)
     print(f"\n[OK] Built standalone executable: {exe_path} ({size_mb:.1f} MB)")
 

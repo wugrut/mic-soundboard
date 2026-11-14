@@ -60,7 +60,7 @@ class PadUpdate(BaseModel):
 
 
 def create_app(base_dir: Path, start_audio: bool = True) -> FastAPI:
-    app = FastAPI(title="Mic Soundboard & Audio Injector")
+    app = FastAPI(title="HotMic — Virtual Mic Soundboard")
     sounds_dir = base_dir / "sounds"
     config_path = base_dir / "config.json"
     static_dir = Path(__file__).parent / "static"
