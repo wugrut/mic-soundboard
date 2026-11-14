@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/*
+!dist/Mic_Soundboard.exe
+*.spec
+soundboard.log
+.default_mic_backup.json
+config.json
+sounds/

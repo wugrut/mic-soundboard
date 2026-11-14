@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+websockets
+python-multipart
+sounddevice
+numpy
+soundfile
+av
+pynput
+yt-dlp
+pycaw
+comtypes
+pytest
+httpx
+pyinstaller

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mic Soundboard — Steam Virtual Mic Injector</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🎛️</span>
+      <div>
+        <h1>MIC SOUNDBOARD</h1>
+        <div class="subline" id="discord-hint">
+          Select <strong id="discord-mic-name">Microphone (Steam Streaming Microphone)</strong> in Discord / Game
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="btn-mic-mute" class="btn btn-mic">🎙️ Mic Live</button>
+      <button id="btn-stop-all" class="btn btn-danger">⏹ Stop All <span class="kbd" id="stop-kbd">F12</span></button>
+      <button id="btn-add-sound" class="btn btn-primary">+ Add Sound</button>
+      <button id="btn-routing" class="btn btn-ghost">⚙️ Audio Routing</button>
+      <input type="file" id="file-input" multiple accept=".wav,.mp3,.ogg,.flac,.m4a,.aac,.mp4,.webm,.opus,.wma" hidden />
+    </div>
+  </header>
+
+  <section class="mixer-strip">
+    <div class="meter-card">
+      <div class="meter-head">
+        <span>🎙️ Voice Mic</span>
+        <span id="mic-gain-val">100%</span>
+      </div>
+      <div class="meter-bar"><div class="meter-fill mic" id="meter-mic"></div></div>
+      <input type="range" id="slider-mic-gain" min="0" max="2" step="0.05" value="1" />
+    </div>
+
+    <div class="meter-card">
+      <div class="meter-head">
+        <span>🔊 Soundboard</span>
+        <span id="sb-gain-val">85%</span>
+      </div>
+      <div class="meter-bar"><div class="meter-fill sb" id="meter-sb"></div></div>
+      <input type="range" id="slider-sb-gain" min="0" max="1.5" step="0.05" value="0.85" />
+    </div>
+
+    <div class="meter-card">
+      <div class="meter-head">
+        <span>🎧 Hear Locally</span>
+        <label class="switch-inline">
+          <input type="checkbox" id="chk-monitor" checked />
+          <span id="mon-gain-val">65%</span>
+        </label>
+      </div>
+      <div class="meter-bar"><div class="meter-fill vout" id="meter-vout"></div></div>
+      <input type="range" id="slider-mon-gain" min="0" max="1.5" step="0.05" value="0.65" />
+    </div>
+
+    <div class="meter-card toggles-card">
+      <label class="toggle-row">
+        <input type="checkbox" id="chk-polyphonic" checked />
+        <span>Overlap Sounds</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="chk-duck" />
+        <span>Duck Voice on Clip</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="chk-duck-music" />
+        <span>Duck Music When I Speak</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="chk-queue" />
+        <span>Auto-Next (Queue)</span>
+      </label>
+    </div>
+  </section>
+
+  <main id="drop-zone" class="pad-area">
+    <div class="yt-bar">
+      <input type="text" id="yt-url-input" placeholder="Paste YouTube or YouTube Music URL (e.g. https://music.youtube.com/watch?v=...)" />
+      <button id="btn-yt-import" class="btn btn-primary">🔗 Import &amp; Play</button>
+      <span id="yt-status" class="hint"></span>
+    </div>
+
+    <div id="drop-overlay" class="drop-overlay hidden">
+      <div class="drop-box">Drop audio files (.mp3, .wav, .ogg, .m4a, .webm) to add pads</div>
+    </div>
+
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-icon">🎵</div>
+      <h2>Drop audio files here to build your soundboard</h2>
+      <p>Supports MP3, WAV, OGG, FLAC, M4A, WebM, and MP4. Trigger by click or global in-game hotkeys.</p>
+      <button id="btn-empty-add" class="btn btn-primary">+ Browse Audio Files</button>
+    </div>
+
+    <div id="pad-grid" class="pad-grid"></div>
+  </main>
+
+  <!-- Routing & Calibration Modal -->
+  <div id="modal-routing" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>⚙️ Audio Routing & Virtual Mic</h2>
+        <button class="btn-icon" id="close-routing">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Physical Microphone (Your Voice)</label>
+          <select id="sel-mic"></select>
+        </div>
+        <div class="field">
+          <label>Virtual Mic Loopback Output</label>
+          <select id="sel-vout"></select>
+        </div>
+        <div class="field">
+          <label>Headphones / Local Monitor</label>
+          <select id="sel-mon"></select>
+        </div>
+        <div class="field">
+          <label>Virtual Mic Output Trim (<span id="vout-db-label">-30.0 dB</span>)</label>
+          <input type="range" id="slider-vout-db" min="-42" max="6" step="0.5" value="-30" />
+          <small class="hint">Steam Streaming Microphone adds +30 dB internally; -30.0 dB keeps output clean and unclipped.</small>
+        </div>
+        <div class="field">
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-auto-mic" checked />
+            <span>Auto-Switch Windows Default Mic while running (restores on exit)</span>
+          </label>
+        </div>
+        <div class="field row-between">
+          <button id="btn-calibrate" class="btn btn-primary">🎛️ Auto-Calibrate Loopback Gain</button>
+          <span id="calibrate-status" class="hint"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pad Editor Modal -->
+  <div id="modal-pad" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Edit Sound Pad</h2>
+        <button class="btn-icon" id="close-pad">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-pad-id" />
+        <div class="field">
+          <label>Pad Name</label>
+          <input type="text" id="edit-pad-name" />
+        </div>
+        <div class="field">
+          <label>Clip Volume (<span id="edit-pad-vol-label">100%</span>)</label>
+          <input type="range" id="edit-pad-vol" min="0.1" max="2.0" step="0.05" value="1.0" />
+        </div>
+        <div class="field">
+          <label>Global Hotkey (works in-game)</label>
+          <div class="hotkey-row">
+            <input type="text" id="edit-pad-hotkey" placeholder="Click Record & press key" readonly />
+            <button id="btn-record-hotkey" class="btn btn-ghost">Record</button>
+            <button id="btn-clear-hotkey" class="btn btn-ghost">Clear</button>
+          </div>
+        </div>
+        <div class="field row-between">
+          <div class="field" style="flex:1">
+            <label>Trim Start (sec)</label>
+            <input type="number" id="edit-pad-start" min="0" step="0.1" value="0" />
+          </div>
+          <div class="field" style="flex:1">
+            <label>Trim End (sec, blank = full)</label>
+            <input type="number" id="edit-pad-end" min="0" step="0.1" placeholder="Full" />
+          </div>
+        </div>
+        <div class="field row-between">
+          <label class="toggle-row">
+            <input type="checkbox" id="edit-pad-loop" />
+            <span>Loop Clip</span>
+          </label>
+          <input type="color" id="edit-pad-color" value="#5865f2" />
+        </div>
+        <div class="modal-footer">
+          <button id="btn-delete-pad" class="btn btn-danger">Delete Pad</button>
+          <button id="btn-save-pad" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
